@@ -7,9 +7,14 @@ You can also adjust the size of the window with an optional argument:
 
 centersize +5%
 centersize -5%
+
+# doesn't preserve aspect. margin=0 means full screen
 centersize margin=50
+
+# these do preserve aspect
 centersize w=500
 centersize h=500
+
 
 
 bugs:
@@ -19,9 +24,12 @@ y centering and resizing seems to fail on my dual-monitor fvwm 2.5 setup.
 from __future__ import division
 import wmctrl, sys
 
-biggest_win = max([(w.area(),w) for w in wmctrl.windowList()])[1]
+try:
+    biggest_win = max([(w.area(),w) for w in wmctrl.windowList()])[1]
+except ValueError:
+    raise SystemExit("couldn't determine the biggest window")
 
-print biggest_win
+print "resizing %r" % biggest_win
 
 try:
     w,h = wmctrl.activeDesktopWorkareaSize()
