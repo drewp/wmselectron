@@ -1,0 +1,59 @@
+#!/usr/bin/python
+
+"""Find the biggest window (which is probably the movie you're plaing)
+and center it on the desktop.
+
+You can also adjust the size of the window with an optional argument:
+
+centersize +5%
+centersize -5%
+centersize margin=50
+centersize w=500
+centersize h=500
+
+
+bugs:
+
+y centering and resizing seems to fail on my dual-monitor fvwm 2.5 setup.
+"""
+from __future__ import division
+import wmctrl, sys
+
+biggest_win = max([(w.area(),w) for w in wmctrl.windowList()])[1]
+
+print biggest_win
+
+try:
+    w,h = wmctrl.activeDesktopWorkareaSize()
+except ValueError:
+    print "couldn't get desktop size - using 1024x768"
+    w,h = 1024,768
+
+nw, nh = biggest_win.width, biggest_win.height
+if len(sys.argv) > 1:
+    adj = sys.argv[1]
+    if adj.endswith("%"):
+        if adj[0] not in "+-":
+            adj = "+"+adj
+        factor = 1 + .01 * float(adj[1:-1])
+        if adj[0] == '-':
+            factor = 1 / factor            
+        nw *= factor
+        nh *= factor
+        
+    if adj.startswith("margin="):
+        margin = int(adj[7:])
+        nw = w - margin * 2
+        nh = h - margin * 2
+
+    if adj.startswith("w="):
+        nw, nh = int(adj[2:]), int(int(adj[2:]) / nw * nh)
+        
+    if adj.startswith("h="):
+        nw, nh = int(int(adj[2:]) / nh * nw), int(adj[2:])
+
+cx = w // 2 - nw // 2
+cy = h // 2 - nh // 2
+wmctrl.resizeAndMove(biggest_win, cx, cy, nw, nh,
+                     grav=wmctrl.gravity.NorthWest)
+    

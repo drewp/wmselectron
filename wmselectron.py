@@ -1,16 +1,7 @@
 import os, commands, Tix as Tk
 from Selectron import Selectron
 import TkGeomSavers as TkGeom
-
-class WindowInfo:
-    def __init__(self, name, x, y, width, height):
-        self.name = name
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-    def __str__(self):
-        return self.name
+import wmctrl
 
 class WMSelectron(Tk.Frame):
     def __init__(self, master, key, autohide=1):
@@ -26,19 +17,7 @@ class WMSelectron(Tk.Frame):
         os.system('wmctrl -r "WMSelectron - %s" -b add,hidden' % self.key)
     def refresh(self, *args):
         self.windows = []
-        wmctrlout = commands.getoutput('wmctrl -Gl')
-        windows = wmctrlout.splitlines()
-        for win in windows:
-            try:
-                junk, flags, x, y, width, height, host, name = \
-                    win.split(None, 7)
-                self.windows.append(WindowInfo(name, x, y, width, height))
-            except ValueError:
-                # wmctrl is b0rked
-                # the height and host got merged somehow :-/
-                junk, flags, x, y, width, heighthost, name = \
-                    win.split(None, 6)
-                self.windows.append(WindowInfo(name, x, y, width, 0))
+        self.windows = wmctrl.windowList()
 
         if self.selectron:
             self.selectron.pack_forget()
@@ -52,9 +31,9 @@ class WMSelectron(Tk.Frame):
     def selectron_callback(self, objs):
         if len(objs) == 1:
             obj = objs[0]
-            os.system('wmctrl -a "%s"' % obj.name)
             if self.autohide:
                 self.hide()
+            os.system('wmctrl -a "%s"' % obj.name)
 
 if __name__ == "__main__":
     import time
